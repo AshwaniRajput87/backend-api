@@ -12,11 +12,23 @@ fastify.register(require('@fastify/jwt'), {
   secret: process.env.JWT_SECRET
 })
 
+// Optional: form body parsing for demo endpoints
+fastify.register(require('@fastify/formbody'))
+// Accept any JSON-like content type (including duplicated headers merged by fetch)
+fastify.addContentTypeParser(/^application\/json.*$/i, { parseAs: 'string' }, (req, body, done) => {
+  try {
+    done(null, body ? JSON.parse(body) : {});
+  } catch (err) {
+    done(err, undefined);
+  }
+})
+
 // Routes
 const authRoutes = require('./routes/auth.routes')
 const userRoutes = require('./routes/user.routes')
+const demoRoutes = require('./routes/demo.routes')
 
-const PORT = 6010
+const PORT = process.env.PORT || 3000
 
 const startServer = async () => {
   try {
@@ -48,6 +60,7 @@ const startServer = async () => {
     // Register routes
     fastify.register(authRoutes)
     fastify.register(userRoutes)
+    fastify.register(demoRoutes)
 
     await fastify.listen({ port: PORT, host: '127.0.0.1' })
 

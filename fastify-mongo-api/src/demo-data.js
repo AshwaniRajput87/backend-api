@@ -16,6 +16,13 @@ const db = {
     { userId: 1, id: 1, title: 'quidem molestiae enim' },
     { userId: 1, id: 2, title: 'sunt qui excepturi placeat culpa' },
   ],
+  comments: [
+    { postId: 1, id: 1, name: 'id labore ex et quam laborum', body: 'laudantium enim quasi est quidem magnam voluptate ipsam eos' },
+  ],
+  photos: [
+    { albumId: 1, id: 1, title: 'accusamus beatae ad facilis cum similique qui sunt', url: 'http://localhost:3000/photos/1', thumbnailUrl: 'http://localhost:3000/photos/thumbs/1' },
+    { albumId: 1, id: 2, title: 'reprehenderit est deserunt velit ipsam', url: 'http://localhost:3000/photos/2', thumbnailUrl: 'http://localhost:3000/photos/thumbs/2' },
+  ],
 };
 
 module.exports = db;

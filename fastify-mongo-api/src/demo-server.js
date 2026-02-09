@@ -1,5 +1,13 @@
 const fastify = require('fastify')({ logger: true });
 fastify.register(require('@fastify/formbody'));
+// Accept any JSON-like content type (including duplicated headers merged by fetch)
+fastify.addContentTypeParser(/^application\/json.*$/i, { parseAs: 'string' }, (req, body, done) => {
+  try {
+    done(null, body ? JSON.parse(body) : {});
+  } catch (err) {
+    done(err, undefined);
+  }
+});
 const db = require('./demo-data');
 
 const PORT = 3000;
@@ -64,6 +72,16 @@ fastify.delete('/posts/:id', async (request, reply) => {
   return { message: 'Post deleted' };
 });
 
+// --- Comments ---
+fastify.get('/comments/:id', async (request, reply) => {
+  const comment = db.comments.find((c) => c.id == request.params.id);
+  if (!comment) {
+    reply.code(404);
+    return { error: 'Comment not found' };
+  }
+  return comment;
+});
+
 
 // --- Users ---
 fastify.get('/users', async (request, reply) => {
@@ -87,6 +105,12 @@ fastify.get('/todos/1', async (request, reply) => {
 // --- Albums ---
 fastify.get('/albums', async (request, reply) => {
   return db.albums;
+});
+
+// --- Photos ---
+fastify.get('/photos', async (request) => {
+  // Echo back any query params for demo visibility while returning sample data
+  return { params: request.query, data: db.photos };
 });
 
 // --- Special Demo Routes ---
