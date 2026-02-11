@@ -139,6 +139,57 @@ fastify.get('/delay/:seconds', async (request, reply) => {
 });
 
 
+// --- Progress Demo Routes ---
+
+fastify.post('/upload-progress', async (request, reply) => {
+  const chunks = [];
+  let receivedBytes = 0;
+
+  // Use a ReadableStream to process the incoming body in chunks
+  // This is a common pattern for handling large uploads in Fastify
+  if (request.body && typeof request.body.pipe === 'function') { // Check if it's a stream
+    for await (const chunk of request.body) {
+      chunks.push(chunk);
+      receivedBytes += chunk.length;
+      fastify.log.info(`Server received ${receivedBytes} bytes...`);
+      await sleep(50); // Simulate processing delay
+    }
+  } else if (request.body) { // If not a stream, assume it's already parsed (e.g., JSON, form-urlencoded)
+    const bodyBuffer = Buffer.from(JSON.stringify(request.body));
+    receivedBytes = bodyBuffer.length;
+    fastify.log.info(`Server received full body of ${receivedBytes} bytes (non-streamed).`);
+    await sleep(100); // Simulate processing delay
+  }
+
+  return { message: `Upload complete. Received ${receivedBytes} bytes.` };
+});
+
+fastify.get('/download-progress', async (request, reply) => {
+  const chunkSize = 1024 * 10; // 10KB chunks
+  const totalSize = 1024 * 1024 * 5; // 5MB total
+  let sentBytes = 0;
+
+  reply.raw.writeHead(200, {
+    'Content-Type': 'application/octet-stream',
+    'Content-Length': totalSize,
+    'X-Custom-Header': 'Progress-Demo',
+  });
+
+  const generateData = () => Buffer.from('a'.repeat(chunkSize)); // Generate 10KB of 'a's
+
+  for (let i = 0; i < totalSize / chunkSize; i++) {
+    const chunk = generateData();
+    reply.raw.write(chunk);
+    sentBytes += chunk.length;
+    fastify.log.info(`Server sent ${sentBytes} bytes...`);
+    await sleep(50); // Simulate network/processing delay
+  }
+
+  reply.raw.end();
+  return reply; // Fastify expects a return, but raw.end handles response
+});
+
+
 const start = async () => {
   try {
     await fastify.listen({ port: PORT, host: '127.0.0.1' });
